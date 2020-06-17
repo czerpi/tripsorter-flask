@@ -33,7 +33,7 @@ class BoardingCard(ABC):
         return f'<{self.__class__.__name__}: {self.origin} {self.destination}>'
 
     @abstractmethod
-    def __str__(self):
+    def description(self):
         """Print way from <Origin> to <Destination>"""
 
 
@@ -50,7 +50,7 @@ class TrainBoardingCard(BoardingCard):
         self.transport_no = transport_no
         self.seat = seat
 
-    def __str__(self):
+    def description(self):
         sentence1 = f'Take train {self.transport_no} from '
         sentence1 += f'{self.origin} to {self.destination}.'
         sentence2 = f'Sit in seat {self.seat}.'
@@ -67,7 +67,7 @@ class AirportBusBoardingCard(BoardingCard):
                  ):
         super().__init__(origin, destination)
 
-    def __str__(self):
+    def description(self):
         sentence1 = f'Take the airport bus from {self.origin} '
         sentence1 += f'to {self.destination}.'
         sentence2 = 'No seat assignment.'
@@ -91,7 +91,7 @@ class PlaneBoardingCard(BoardingCard):
         self.seat = seat
         self.baggage_drop = baggage_drop
 
-    def __str__(self):
+    def description(self):
         sentence1 = f'From {self.origin}, take flight {self.transport_no} '
         sentence1 += f'to {self.destination}.'
         sentence2 = f'Gate {self.gate}, seat {self.seat}.'

@@ -49,13 +49,13 @@ def test_trips_page_wrong_body_post(client):
     rv = client.post(
         test_url,
         content_type='application/json',
-        json={"body": "12"}
+        json={"cards": [{}]}
     )
     # Assumes that it will return a 400 response
     assert rv.status_code == 400
     # Assumes that it will return error invalid input
     assert rv.json == {"error": "invalid input",
-                       "message": "Wrong parameters in JSON body."}
+                       "message": "Wrong parameters in JSON."}
 
 
 def test_trips_page_empty_trip_post(client):
@@ -64,18 +64,16 @@ def test_trips_page_empty_trip_post(client):
     rv = client.post(
         test_url,
         content_type='application/json',
-        json={"body": ""}
+        json={"cards": ""}
     )
     # Assumes that it will return a 200 response
     assert rv.status_code == 200
-    # Assumes that it will return 0 stages
-    assert rv.json['stages'] == 0
     # Assumes that it will return no trips planned
-    assert rv.json['body'] == {'0': 'No trips planned yet.'}
+    assert rv.json['cards'] == ['No trips planned yet.', ]
 
 
 def test_trips_page_duplicated_origin_post(client):
-    body_duplicated_origin = {"body":
+    body_duplicated_origin = {"cards":
                               [
                                   {"transport_type": "airportbus",
                                    "origin": "Barcelona",
@@ -96,11 +94,36 @@ def test_trips_page_duplicated_origin_post(client):
     assert rv.status_code == 400
     # Assumes that it will return error invalid input
     assert rv.json == {"error": "invalid input",
-                       "message": "Broken chain between all the legs of the trip."}
+                       "message": "Broken chain between all the legs of the trip. Duplicated origins."}
+
+
+def test_trips_page_unlinked_stages_post(client):
+    body_unlinked_stages = {"cards":
+                            [
+                                {"transport_type": "airportbus",
+                                 "origin": "Barcelona",
+                                 "destination": "Girona Airport"},
+                                {"transport_type": "airportbus",
+                                 "origin": "Katowice",
+                                 "destination": "Warsaw"},
+                            ]
+                            }
+    # Assumses that it has a path of "/api/v1.0/trips/"
+    test_url = url+'/api/v1.0/trips/'
+    rv = client.post(
+        test_url,
+        content_type='application/json',
+        json=body_unlinked_stages
+    )
+    # Assumes that it will return a 400 response
+    assert rv.status_code == 400
+    # Assumes that it will return error invalid input
+    assert rv.json == {"error": "invalid input",
+                       "message": "Broken chain between all the legs of the trip. Lack of one origin."}
 
 
 def test_trips_page_circular_trip_post(client):
-    body_duplicated_origin = {"body":
+    body_duplicated_origin = {"cards":
                               [
                                   {"transport_type": "airportbus",
                                    "origin": "Barcelona",
@@ -121,12 +144,12 @@ def test_trips_page_circular_trip_post(client):
     assert rv.status_code == 400
     # Assumes that it will return error invalid input
     assert rv.json == {"error": "invalid input",
-                       "message": "Broken chain between all the legs of the trip."}
+                       "message": "Broken chain between all the legs of the trip. Lack of one origin."}
 
 
 def test_trips_page_wrong_tranport_type_post(client):
     # uses wrong tranport_type 'nonexist'
-    body_wrong_transport_type = {"body":
+    body_wrong_transport_type = {"cards":
                                  [
                                      {"transport_type": "nonexist",
                                       "origin": "Barcelona",
@@ -151,7 +174,7 @@ def test_trips_page_wrong_tranport_type_post(client):
 
 
 def test_trips_page_post_ok(client):
-    body_ok = {"body":
+    body_ok = {"cards":
                [
                    {"transport_type": "airportbus",
                     "origin": "Barcelona",
@@ -177,15 +200,13 @@ def test_trips_page_post_ok(client):
                ]
                }
     response_ok = {
-        "body": {
-            "0": "Take train 78A from Madrid to Barcelona. Sit in seat 45B.",
-            "1": "Take the airport bus from Barcelona to Girona Airport. No seat assignment.",
-            "2": "From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.",
-            "3": "From Stockholm, take flight SK22 to New York. Gate 22, seat 7B. ",
-            "4": "You have arrived at your final destination."
-        },
-        "stages": 4,
-        "url": "http://127.0.0.1:5000/api/v1.0/trips/"
+        "cards": [
+            "Take train 78A from Madrid to Barcelona. Sit in seat 45B.",
+            "Take the airport bus from Barcelona to Girona Airport. No seat assignment.",
+            "From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.",
+            "From Stockholm, take flight SK22 to New York. Gate 22, seat 7B. ",
+            "You have arrived at your final destination."
+        ]
     }
     # Assumses that it has a path of "/api/v1.0/trips/"
     test_url = url+'/api/v1.0/trips/'

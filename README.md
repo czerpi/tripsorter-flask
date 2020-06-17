@@ -22,7 +22,6 @@ pip install -e .
 ## Run
 
 ```bash
-export FLASK_APP=app
 flask run
 ```
 
@@ -52,7 +51,7 @@ http://127.0.0.1:5000/api/v1.0/trips/
 Testing the following trip with 3 different transport modes (train, airport bus, plane):
 
 ```json
-{"body":[{"transport_type": "airportbus",          
+{"cards":[{"transport_type": "airportbus",          
   "origin": "Barcelona",    
   "destination": "Girona Airport"},
  {"transport_type": "plane",
@@ -84,15 +83,13 @@ curl -X POST -H "Content-Type: application/json" -d 'PUT BODYHERE' http://127.0.
 Will return the following result:
 ```json
 {
-  "body": {
-    "0": "Take train 78A from Madrid to Barcelona. Sit in seat 45B.",
-    "1": "Take the airport bus from Barcelona to Girona Airport. No seat assignment.",
-    "2": "From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.",
-    "3": "From Stockholm, take flight SK22 to New York. Gate 22, seat 7B. ",
-    "4": "You have arrived at your final destination."
-  },
-  "stages": 4,
-  "url": "http://127.0.0.1:5000/api/v1.0/trips/"
+  "cards": [
+    "Take train 78A from Madrid to Barcelona. Sit in seat 45B.",
+    "Take the airport bus from Barcelona to Girona Airport. No seat assignment.",
+    "From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.",
+    "From Stockholm, take flight SK22 to New York. Gate 22, seat 7B. ",
+    "You have arrived at your final destination."
+  ]
 }
 ```
 
@@ -105,7 +102,7 @@ class NewTranportBoardingCard(BoardingCard):
     Takes only two parameters (origin, destination)"""
     _BOARDINGCARTTYPE = 'newtransport'
 
-    def __str__(self):
+    def description(self):
         return f'Take new transport mode from {self.origin} to {self.destination}'
 
 ```
@@ -128,7 +125,7 @@ class OtherTranportBoardingCard(BoardingCard):
         self.seat = seat
         self.departure_time = departure_time
 
-    def __str__(self):
+    def description(self):
         sentence1 = f'Take transport {self.transport_no} at {self.departure_time} '
         sentence1 += f'from {self.origin} to {self.destination}.'
         sentence2 = f'Sit in seat {self.seat}.'

@@ -14,10 +14,6 @@ def test_trip_class():
 
     # Assumes that wrong json will raise ValidationError
     with pytest.raises(ValidationError):
-        trip.from_json({"body": "12"})
-
-    # Assumes that wrong json will raise ValidationError
-    with pytest.raises(ValidationError):
         trip.from_json({})
 
 
@@ -55,16 +51,16 @@ def test_trip_sorting():
 
     it = iter(trip)
     # Assumes that trip starts in Madrid
-    assert next(it).origin == 'Madrid'
+    assert next(it) == 'Madrid'
 
     # Assumes that trip stages are in the
     # following order Madrid => Barcelona => Girona Airport => Stockholm
-    assert [str(stage.origin) for stage in trip.keys()] == [
+    assert [origin for origin in trip] == [
         'Madrid', 'Barcelona', 'Girona Airport', 'Stockholm']
 
     # Checks Girona Airport stage printout
-    assert str(
-        trip['Girona Airport']) == 'From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.'
+    ans = 'From Girona Airport, take flight SK455 to Stockholm. Gate 45B, seat 3A. Baggage drop at ticket counter 344.'
+    assert trip['Girona Airport'].description() == ans
 
 
 def test_trip_duplicate_origin():
@@ -104,6 +100,83 @@ def test_trip_duplicate_destination():
            "seat": "3A",
            "gate": "45B",
            "baggage_drop": 344})
+
+    it = iter(trip)
+    with pytest.raises(ValidationError):
+        assert next(it)
+
+
+def test_trip_unlinked_stages():
+    # creates test trip
+    trip = Trip()
+    trip['Barcelona'] = BoardingCard.create(
+        **{"transport_type": "airportbus",
+           "origin": "Barcelona",
+           "destination": "Girona Airport"})
+
+    # add unlinked stages
+    trip['Stockholm'] = BoardingCard.create(
+        **{"transport_type": "plane",
+           "origin": "Stockholm",
+           "destination": "Warszawa",
+           "transport_no": "SK455",
+           "seat": "3A",
+           "gate": "45B",
+           "baggage_drop": 344})
+
+    it = iter(trip)
+    with pytest.raises(ValidationError):
+        assert next(it)
+
+
+def test_trip_circular():
+    # creates test trip
+    trip = Trip()
+    trip['Barcelona'] = BoardingCard.create(
+        **{"transport_type": "airportbus",
+           "origin": "Barcelona",
+           "destination": "Girona Airport"})
+    trip['Girona Airport'] = BoardingCard.create(
+        **{"transport_type": "plane",
+           "origin": "Girona Airport",
+           "destination": "Madrid",
+           "transport_no": "SK455",
+           "seat": "3A",
+           "gate": "45B",
+           "baggage_drop": 344})
+    trip['Madrid'] = BoardingCard.create(
+        ** {"transport_type": "train",
+            "origin": "Madrid",
+            "destination": "Barcelona",
+            "seat": "45B",
+            "transport_no": "78A"})
+
+    it = iter(trip)
+    with pytest.raises(ValidationError):
+        assert next(it)
+
+
+def test_trip_circular_duplicate_destination():
+    # creates test trip
+    trip = Trip()
+    trip['Barcelona'] = BoardingCard.create(
+        **{"transport_type": "airportbus",
+           "origin": "Barcelona",
+           "destination": "Girona Airport"})
+    trip['Girona Airport'] = BoardingCard.create(
+        **{"transport_type": "plane",
+           "origin": "Girona Airport",
+           "destination": "Barcelona",
+           "transport_no": "SK455",
+           "seat": "3A",
+           "gate": "45B",
+           "baggage_drop": 344})
+    trip['Madrid'] = BoardingCard.create(
+        ** {"transport_type": "train",
+            "origin": "Madrid",
+            "destination": "Barcelona",
+            "seat": "45B",
+            "transport_no": "78A"})
 
     it = iter(trip)
     with pytest.raises(ValidationError):
